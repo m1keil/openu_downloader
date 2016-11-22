@@ -51,13 +51,16 @@ def get_files(chunklist_url):
 
 
 def download(url, path):
-    print 'downloading: %s' % url
-    r = requests.get(url)
-    r.raise_for_status()
-    data = r.content
-
     fname = url.split('/')[-1]
     fpath = os.path.join(path, fname)
+    if os.path.isfile(fpath):
+        print 'File already exists: {}. Skipping'.format(fname)
+        return
+
+    print 'downloading: %s' % url
+    r = requests.get(url, timeout=10)
+    r.raise_for_status()
+    data = r.content
 
     with open(fpath, 'w') as fp:
         fp.write(data)
@@ -95,7 +98,6 @@ def main():
         os.makedirs(tmp_path)
     except OSError as e:
         print 'Unable to create dir: {}. {}.'.format(tmp_path, e.strerror)
-        exit(1)
 
     pool = gevent.pool.Pool(size=4)
     [pool.spawn(download, url, tmp_path) for url in files]
